@@ -12,6 +12,7 @@ use Doctrine\ORM\Mapping\Id;
 use Doctrine\ORM\Mapping\JoinColumn;
 use Doctrine\ORM\Mapping\ManyToOne;
 use Symfony\Component\Validator\Constraints\Range;
+use Symfony\Component\Validator\Constraints\NotBlank;
 
 #[Entity]
 class Review
@@ -29,6 +30,7 @@ class Review
     #[JoinColumn(nullable: false)]
     private User $user;
 
+    #[NotBlank]
     #[Range(min: 1, max: 5)]
     #[Column]
     private int $rating;
