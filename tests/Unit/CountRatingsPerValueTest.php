@@ -60,6 +60,9 @@ final class CountRatingsPerValueTest extends TestCase
         );
     }
 
+    /**
+     * @return array<string, array{0: VideoGame, 1: int, 2: int, 3: int, 4: int, 5: int}>
+     */
     public static function provideVideoGame(): array
     {
         // Je retourne plusieurs jeux de données pour tester plusieurs cas

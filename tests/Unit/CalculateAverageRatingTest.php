@@ -29,6 +29,9 @@ final class CalculateAverageRatingTest extends TestCase
         );
     }
 
+    /**
+     * @return array<string, array{0: VideoGame, 1: int|null}>
+     */
     public static function provideVideoGame(): array
     {
         // Je retourne plusieurs jeux de données pour tester plusieurs cas

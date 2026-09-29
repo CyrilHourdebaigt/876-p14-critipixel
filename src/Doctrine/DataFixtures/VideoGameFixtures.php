@@ -2,8 +2,8 @@
 
 namespace App\Doctrine\DataFixtures;
 
-use App\Model\Entity\Tag;
 use App\Model\Entity\Review;
+use App\Model\Entity\Tag;
 use App\Model\Entity\User;
 use App\Model\Entity\VideoGame;
 use App\Rating\CalculateAverageRating;
@@ -13,8 +13,6 @@ use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Doctrine\Persistence\ObjectManager;
 use Faker\Generator;
-
-use function array_fill_callback;
 
 final class VideoGameFixtures extends Fixture implements DependentFixtureInterface
 {
@@ -27,100 +25,105 @@ final class VideoGameFixtures extends Fixture implements DependentFixtureInterfa
 
     public function load(ObjectManager $manager): void
     {
-        //Je récupère les tags présents en bdd
+        // Je récupère les tags présents en bdd
         $tags = $manager->getRepository(Tag::class)->findAll();
 
-        $videoGames = array_fill_callback(0, 50, fn (int $index): VideoGame => (new VideoGame)
-            ->setTitle(sprintf('Jeu vidéo %d', $index))
-            ->setDescription($this->faker->paragraphs(10, true))
-            ->setReleaseDate(new DateTimeImmutable())
-            ->setTest($this->faker->paragraphs(6, true))
-            ->setRating(($index % 5) + 1)
-            ->setImageName(sprintf('video_game_%d.png', $index))
-            ->setImageSize(2_098_872)
-        );
+        // Je prépare un tableau qui contiendra les jeux
+        $videoGames = [];
 
-        // TODO : Ajouter les tags aux vidéos
-        //Je parcours le sjeux vidéos
-        foreach ($videoGames as $index => $videoGame) {
+        // Je crée 50 jeux
+        for ($index = 0; $index < 50; $index++) {
 
-            /** @var VideoGame $videoGame */
+            // Je crée un nouveau jeu
+            $videoGame = new VideoGame();
 
-            //Je parcours 5 fois pour ajouter 5 tags au jeu
-            for ($tagIndex = 0; $tagIndex< 5; $tagIndex++) {
+            // Je renseigne les informations du jeu
+            $videoGame
+                ->setTitle(sprintf('Jeu vidéo %d', $index))
+                ->setDescription($this->faker->paragraphs(10, true))
+                ->setReleaseDate(new DateTimeImmutable())
+                ->setTest($this->faker->paragraphs(6, true))
+                ->setRating(($index % 5) + 1)
+                ->setImageName(sprintf('video_game_%d.png', $index))
+                ->setImageSize(2_098_872);
 
-                //Je choisis un tag en fonction de l'index du jeu et de la boucle
+            // Je parcours 5 fois pour ajouter 5 tags au jeu
+            for ($tagIndex = 0; $tagIndex < 5; $tagIndex++) {
+
+                // Je choisis un tag en fonction de l'index du jeu
                 $tag = $tags[($index + $tagIndex) % count($tags)];
 
-                //J'ajoute le tag au jeu
+                // J'ajoute le tag au jeu
                 $videoGame->getTags()->add($tag);
             }
+
+            // J'ajoute le jeu dans mon tableau
+            $videoGames[] = $videoGame;
+
+            // Je demande à Doctrine d'enregistrer le jeu
+            $manager->persist($videoGame);
         }
-        
 
-        array_walk($videoGames, [$manager, 'persist']);
-
+        // J'enregistre tous les jeux en bdd
         $manager->flush();
 
-        // TODO : Ajouter des reviews aux vidéos
-        // Je récupère tous les utilisateurs présents en base de données
+        // Je récupère tous les utilisateurs présents en bdd
         $allUsers = $manager->getRepository(User::class)->findAll();
 
-        //Je divise les utilisateurs en groupe de 5
+        // Je divise les utilisateurs en groupes de 5
         $userGroups = array_chunk($allUsers, 5);
 
-        //Je parcours tous les jeux vidéos
+        // Je parcours tous les jeux
         foreach ($videoGames as $index => $videoGame) {
 
-            /** @var VideoGame $videoGame */
-
             // Je choisis un groupe d'utilisateurs pour ce jeu
-            // count($userGroups) me permet de m'adapter au nombre de groupes disponibles
             $usersForThisGame = $userGroups[$index % count($userGroups)];
 
-            //Je parcours les utilisateurs de ce groupe
+            // Je parcours les utilisateurs de ce groupe
             foreach ($usersForThisGame as $user) {
 
-                //Je génère un commentaire aléatoire
+                // Je génère un commentaire aléatoire
                 /** @var string $comment */
                 $comment = $this->faker->paragraphs(1, true);
 
-                //Je crée une nouvelle review
+                // Je crée une nouvelle review
                 $review = new Review();
 
-                //Je définis l'utilisateur qui écrit la review
+                // Je définis l'utilisateur qui écrit la review
                 $review->setUser($user);
 
-                //Je définis le jeu concerné
+                // Je définis le jeu concerné
                 $review->setVideoGame($videoGame);
 
-                //Je génère une note aléatoire entre 1 et 5
+                // Je génère une note aléatoire entre 1 et 5
                 $review->setRating($this->faker->numberBetween(1, 5));
 
-                //J'ajoute le commentaire à la review
+                // J'ajoute le commentaire à la review
                 $review->setComment($comment);
 
-                //J'ajoute la review dans la liste des review du jeu
+                // J'ajoute la review dans la liste des reviews du jeu
                 $videoGame->getReviews()->add($review);
 
-                //J'enregistre
+                // Je demande à Doctrine d'enregistrer la review
                 $manager->persist($review);
 
-                //Je recalcule la moyenne des notes du jeu
+                // Je recalcule la moyenne des notes du jeu
                 $this->calculateAverageRating->calculateAverage($videoGame);
 
-                //Je recompte le nombre de note 1, 2, 3, 4 et 5
+                // Je recompte le nombre de notes 1, 2, 3, 4 et 5
                 $this->countRatingsPerValue->countRatingsPerValue($videoGame);
             }
         }
 
-        //J'enregistre en bdd
+        // J'enregistre les reviews en bdd
         $manager->flush();
-
     }
 
     public function getDependencies(): array
     {
-        return [TagFixtures::class, UserFixtures::class];
+        return [
+            TagFixtures::class,
+            UserFixtures::class,
+        ];
     }
 }

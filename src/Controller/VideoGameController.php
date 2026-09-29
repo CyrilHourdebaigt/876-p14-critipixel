@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Model\Entity\User;
 use App\Form\ReviewType;
 use App\List\ListFactory;
 use App\List\VideoGameList\Pagination;
@@ -41,11 +42,27 @@ final class VideoGameController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $this->denyAccessUnlessGranted('review', $videoGame);
+
             $review->setVideoGame($videoGame);
-            $review->setUser($this->getUser());
+
+            // Je récupère l'utilisateur connecté
+            $user = $this->getUser();
+
+            // Je vérifie que l'utilisateur est bien un utilisateur de l'application
+            if (!$user instanceof User) {
+                throw $this->createAccessDeniedException();
+            }
+
+            // J'associe l'utilisateur à la review
+            $review->setUser($user);
+
             $entityManager->persist($review);
             $entityManager->flush();
-            return $this->redirectToRoute('video_games_show', ['slug' => $videoGame->getSlug()]);
+
+            return $this->redirectToRoute(
+                'video_games_show',
+                ['slug' => $videoGame->getSlug()]
+            );
         }
 
         return $this->render('views/video_games/show.html.twig', ['video_game' => $videoGame, 'form' => $form]);

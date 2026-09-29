@@ -35,6 +35,7 @@ final class FilterTest extends FunctionalTestCase
 
     /**
      * @dataProvider provideTags
+     * @param array<string, string> $tags
      */
     public function testShouldFilterVideoGamesByTags(
         array $tags,
@@ -83,6 +84,9 @@ final class FilterTest extends FunctionalTestCase
         );
     }
 
+    /**
+     * @return array<string, array{0: array<string, string>, 1: int}>
+     */
     public static function provideTags(): array
     {
         return [
