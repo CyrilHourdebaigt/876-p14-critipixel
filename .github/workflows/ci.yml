@@ -40,6 +40,9 @@ jobs:
       - name: Installer les dépendances
         run: composer install --prefer-dist --no-interaction --no-progress
 
+      - name: Compiler le Sass
+        run: php bin/console sass:build
+
       - name: Créer la base de données de test
         run: php bin/console doctrine:database:create --env=test
 
